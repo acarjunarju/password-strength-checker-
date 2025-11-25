@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Strength | Cyber Security</title>
+    <title>Password strength  </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -136,14 +136,25 @@
                         type="password" 
                         id="passwordInput" 
                         placeholder="Enter Sequence..." 
-                        class="w-full pl-10 pr-12 py-3 bg-slate-900/80 border border-slate-600 rounded-lg focus:outline-none text-white placeholder-slate-600 font-mono tracking-widest transition-all"
+                        class="w-full pl-10 pr-24 py-3 bg-slate-900/80 border border-slate-600 rounded-lg focus:outline-none text-white placeholder-slate-600 font-mono tracking-widest transition-all"
                     >
-                    <button 
-                        id="toggleVisibility" 
-                        class="absolute right-3 top-3 text-slate-500 hover:text-cyan-400 focus:outline-none transition-colors"
-                    >
-                        <i data-lucide="eye" class="w-5 h-5"></i>
-                    </button>
+                     <!-- Button Group -->
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 space-x-1">
+                        <button 
+                            id="copyBtn" 
+                            class="p-1.5 text-slate-500 hover:text-emerald-400 focus:outline-none transition-colors rounded-md hover:bg-slate-800"
+                            title="Copy to Clipboard"
+                        >
+                            <i data-lucide="copy" class="w-5 h-5"></i>
+                        </button>
+                        <button 
+                            id="toggleVisibility" 
+                            class="p-1.5 text-slate-500 hover:text-cyan-400 focus:outline-none transition-colors rounded-md hover:bg-slate-800"
+                            title="Show/Hide Password"
+                        >
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Generator Button -->
@@ -199,6 +210,7 @@
         const greetingDisplay = document.getElementById('greetingDisplay');
         const passwordInput = document.getElementById('passwordInput');
         const toggleBtn = document.getElementById('toggleVisibility');
+        const copyBtn = document.getElementById('copyBtn');
         const strengthLabel = document.getElementById('strengthLabel');
         const feedbackArea = document.getElementById('feedbackArea');
         const terminalStatus = document.getElementById('terminalStatus');
@@ -257,6 +269,30 @@
             lucide.createIcons();
         });
 
+        // --- Copy to Clipboard ---
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = passwordInput.value;
+            if(!textToCopy) return;
+
+            passwordInput.select();
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<i data-lucide="check" class="w-5 h-5 text-emerald-400"></i>`;
+            lucide.createIcons();
+
+            const div = document.createElement('div');
+            div.className = 'text-emerald-400';
+            div.innerHTML = `> COPIED to clipboard.`;
+            feedbackArea.appendChild(div);
+
+            setTimeout(() => {
+                copyBtn.innerHTML = `<i data-lucide="copy" class="w-5 h-5"></i>`;
+                lucide.createIcons();
+            }, 2000);
+        });
+
         let timeoutId;
         const debounce = (func, delay) => {
             return (...args) => {
@@ -269,18 +305,17 @@
         const generatePassword = async () => {
             try {
                 feedbackArea.innerHTML = `<div class="text-cyan-500 animate-pulse">> Generating sequence...</div>`;
-                const response = await fetch('http://127.0.0.1:5000/api/generate');
+                // CHANGED: Relative path for deployment compatibility
+                const response = await fetch('/api/generate');
                 if (!response.ok) throw new Error('Generator Failed');
                 
                 const data = await response.json();
                 passwordInput.value = data.password;
                 
-                // Ensure visibility toggle is updated if needed, or allow user to see it
                 passwordInput.setAttribute('type', 'text');
                 toggleBtn.innerHTML = `<i data-lucide="eye-off" class="w-5 h-5"></i>`;
                 lucide.createIcons();
 
-                // Trigger check immediately
                 checkPassword(data.password);
 
             } catch (error) {
@@ -299,7 +334,8 @@
             terminalStatus.className = "w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-ping";
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/check', {
+                // CHANGED: Relative path for deployment compatibility
+                const response = await fetch('/api/check', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: password })
